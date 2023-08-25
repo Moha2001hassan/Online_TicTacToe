@@ -1,15 +1,15 @@
 package com.mohassan.tictactoe
 
 import android.app.ProgressDialog
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Button
+import androidx.core.content.ContextCompat
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.mohassan.tictactoe.databinding.ActivityMainBinding
-import com.mohassan.tictactoe.databinding.ActivityPlayerNameBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private var playerTurn = ""
     private var connectionId = ""
     private val doneBoxes = mutableListOf<String>()
+    private var boxesSelected = arrayListOf("","","","","","","","","")
 
     private lateinit var turnsEventListener : ValueEventListener
     private lateinit var wonEventListener : ValueEventListener
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     // getting Firebase Database reference from URL
     private val databaseReference = FirebaseDatabase.getInstance()
         .getReferenceFromUrl("https://tic-tac-toe-9cdfe-default-rtdb.firebaseio.com/")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -55,21 +57,17 @@ class MainActivity : AppCompatActivity() {
 
         binding.tvPlayerOne.text = getPlayerName
 
-        //databaseReference.child("connections").addValueEventListener(ValueEventListener(){})
-        databaseReference.addValueEventListener(object : ValueEventListener{
+        databaseReference.child("connections").addValueEventListener(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
-                // check if opponent found, if not look for the opponent
+                // check if opponent not found, if not look for the opponent
+                //  !opponentFound
                 if (opponentFound){
-
                     // check if there are others in the firebase database
                     if(snapshot.hasChildren()){
-
                         // checking all connections, if other users are also waiting for a user to play
                         for (connection in snapshot.children){
-
                             //getting connection unique id
                             val conId = connection.key.toString()
-
                             /*
                             2 player are required to play the game.
                             if getPlayerCount is 1, it means other player is waiting for an opponent
@@ -179,35 +177,37 @@ class MainActivity : AppCompatActivity() {
                         val getBoxPosition = dataSnapshot.child("box_position").value.toString().toInt()
                         val getPlayerId = dataSnapshot.child("player_id").value.toString()
 
-                        if(doneBoxes.contains(getBoxPosition.toString())){
+                        if(!doneBoxes.contains(getBoxPosition.toString())){
 
                             doneBoxes.add(getBoxPosition.toString())
-                            if (getBoxPosition == 1){
-
-                            }
-                            else if(getBoxPosition == 2) {
-
-                            }
-                            else if(getBoxPosition == 3) {
-
-                            }
-                            else if(getBoxPosition == 4) {
-
-                            }
-                            else if(getBoxPosition == 5) {
-
-                            }
-                            else if(getBoxPosition == 6) {
-
-                            }
-                            else if(getBoxPosition == 7) {
-
-                            }
-                            else if(getBoxPosition == 8) {
-
-                            }
-                            else if(getBoxPosition == 9) {
-
+                            when (getBoxPosition) {
+                                1 -> {
+                                    selectBox(binding.button1,getBoxPosition,getPlayerId)
+                                }
+                                2 -> {
+                                    selectBox(binding.button2,getBoxPosition,getPlayerId)
+                                }
+                                3 -> {
+                                    selectBox(binding.button3,getBoxPosition,getPlayerId)
+                                }
+                                4 -> {
+                                    selectBox(binding.button4,getBoxPosition,getPlayerId)
+                                }
+                                5 -> {
+                                    selectBox(binding.button5,getBoxPosition,getPlayerId)
+                                }
+                                6 -> {
+                                    selectBox(binding.button6,getBoxPosition,getPlayerId)
+                                }
+                                7 -> {
+                                    selectBox(binding.button7,getBoxPosition,getPlayerId)
+                                }
+                                8 -> {
+                                    selectBox(binding.button8,getBoxPosition,getPlayerId)
+                                }
+                                9 -> {
+                                    selectBox(binding.button9,getBoxPosition,getPlayerId)
+                                }
                             }
 
                         }
@@ -218,12 +218,29 @@ class MainActivity : AppCompatActivity() {
             override fun onCancelled(error: DatabaseError) {
 
             }
-
         })
 
         wonEventListener = (object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                if(snapshot.hasChild("player_id")){
 
+                    val getWinPlayerId = snapshot.child("player_id").value.toString()
+                    val winDialog: WinDialog
+
+                    if (getWinPlayerId == playerUniqueId){
+                        winDialog = WinDialog(this@MainActivity,"You won the game")
+                    }
+                    else{
+                        winDialog = WinDialog(this@MainActivity,"Opponent won the game")
+                    }
+                    winDialog.setCancelable(false)
+                    winDialog.show()
+
+                    databaseReference.child("turns").child(connectionId)
+                        .removeEventListener(turnsEventListener)
+                    databaseReference.child("won").child(connectionId)
+                        .removeEventListener(wonEventListener)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -231,6 +248,143 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+
+        binding.button1.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("1") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("1")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button2.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("2") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("2")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button3.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("3") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("3")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button4.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("4") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("4")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button5.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("5") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("5")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button6.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("6") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("6")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button7.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("7") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("7")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button8.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("8") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("8")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+        binding.button9.setOnClickListener {
+
+            // if box not selected before & current user turn
+            if(!doneBoxes.contains("9") && playerTurn == playerUniqueId){
+                binding.button1.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+
+                // sent selected box position & player id to firebase
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("box_position").setValue("9")
+                databaseReference.child("turns").child((doneBoxes.size + 1).toString())
+                    .child("player_id").setValue(playerUniqueId)
+                // change player turn
+                playerTurn = opponentUniqueId
+            }
+        }
+
     }
 
     private fun applyPlayerTurn(playerUniqueId2: String) {
@@ -248,8 +402,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun selectBox(){
+    private fun selectBox(button: Button, selectedBoxPosition: Int, selectedByPlayer: String){
 
+        boxesSelected[selectedBoxPosition - 1] = selectedByPlayer
+
+        if (selectedByPlayer == playerUniqueId){
+            button.background = ContextCompat.getDrawable(this, R.drawable.ic_x)
+            playerTurn = opponentUniqueId
+        }
+        else{
+            button.background = ContextCompat.getDrawable(this, R.drawable.ic_o)
+            playerTurn = opponentUniqueId
+        }
+        applyPlayerTurn(playerTurn)
+
+        if (checkPlayerWin(selectedByPlayer)){
+            databaseReference.child("won").child("player_id").setValue(selectedByPlayer)
+        }
+
+        if (doneBoxes.size == 9){
+            val winDialog = WinDialog(this,"It was Draw!")
+            winDialog.setCancelable(false)
+            winDialog.show()
+        }
+    }
+
+    private fun checkPlayerWin(playerId: String): Boolean{
+        var isPlayerWin = false
+
+        for (i in 0 until combinationList.size){
+            val combination = combinationList[i]
+
+            if(boxesSelected[combination[0]]== playerId
+                && boxesSelected[combination[1]]== playerId
+                && boxesSelected[combination[2]]== playerId){
+
+                isPlayerWin = true
+            }
+        }
+        return isPlayerWin
     }
 }
 
